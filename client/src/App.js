@@ -6,7 +6,6 @@ import Navigation from './components/Navigation';
 import Home from './components/Home';
 import Products from './components/Products';
 import Cart from './components/Cart';
-import Contact from './components/Contact/Contact'
 
 const App = () => {
   const cartItemCount = useSelector((state) =>
@@ -22,7 +21,6 @@ const App = () => {
         <Route path='/' component={Home} exact />
         <Route path='/products' component={Products} exact />
         <Route path='/cart' component={Cart} exact />
-        <Route path='/contact' component={Contact} exact />
       </Switch>
     </BrowserRouter>
   );
