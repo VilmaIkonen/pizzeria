@@ -17,8 +17,7 @@ const Navigation = (props) => {
           </li>
         </ul>
       </nav>
-    </header>
-    
+    </header>    
   );
 };
 
