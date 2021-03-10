@@ -31,6 +31,16 @@ const transport = nodemailer.createTransport({
   }
 })
 
+// For verifying SMTP connection is working:
+transport.verify((err, success) => {
+  if (err) {
+    console.log(err);
+  } 
+  else {
+    console.log("Server is ready to take our messages!");
+  }
+});
+
 // default endpoint:
 app.get('/', (req, res) => {
   res.send({message: 'Default route in pizzeria contact form'})
