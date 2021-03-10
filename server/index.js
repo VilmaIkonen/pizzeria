@@ -1,80 +1,67 @@
-const express = require('express');
-const router = express.Router();
+//with oAuth2, not working currently
 const nodemailer = require('nodemailer');
-const cors = require('cors');
+const {google} = require('googleapis');
 const credits = require('./config');
-const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use('/', router);
-app.listen(3002);
+const oAuth2Client = new google.auth.OAuth2(credits.CLIENT_ID, credits.CLIENT_SECRET, credits.REDIRECT_URI);
 
-// const transport = {
-//   host: '',
-//   port: 587,
-//   auth: {
-//     user: credits.USER,
-//     password: credits.PASSWORD
-//   }
-// }
+oAuth2Client.setCredentials({refresh_token: credits.REFRESH_TOKEN});
 
-// const transporter = nodemailer.createTransport(transport)
+async function sendMail() {
+  try {
+    const accessToken = await oAuth2Client.getAccessToken();
 
-//FOR TESTING:
-const transport = {
-  host: credits.TEST_HOST,
-  port: credits.TEST_PORT,
-  auth: {
-    user: credits.TEST_USER,
-    pass: credits.TEST_PASSWORD
+    const transport = nodemailer.createTransport({
+      host: credits.HOST,
+      port: credits.PORT,
+      secure: true,
+      auth: {
+        type: 'OAuth2',
+        user: credits.USER,
+        clientId: credits.CLIENT_ID,
+        clientSecret: credits.CLIENT_SECRET,
+        refreshToken: credits.REFRESH_TOKEN,
+        accessToken: accessToken
+      }
+    })
+
+    const mailOptions = {
+      from: credits.USER,
+      to: credits.TEST_RECIPIENT,
+      subject: 'New message from contact form',
+      text: 'Hello from test email!',
+      html: '<h1>Hello from test email</h1>!'
+    }
+    
+    const result = await transport.sendMail(mailOptions);
+    return result;
+  } 
+  catch (err) {
+    return err
   }
-};
-
-const transporter = nodemailer.createTransport(transport);
-
-transporter.verify((error, success) => {
-  if(error) {
-    console.log(error)
-  }
-  else {
-    console.log('Server is ready to take messages')
-  }
-})
-
-let mail = {
-  from: 'example user',
-  to: 'user1@example.com',
-  subject: 'New message from contact form',
-  text: 'Hello from test email!'
 }
 
-transporter.sendMail(mail, (error, info) => {
-  if(error) {
-    return console.log(error)
-  }
-  console.log('Message sent: %s', info.messageId)
-})
+sendMail()
+.then((result) => console.log('Email has been send', result))
+.catch((error) => console.log(error.message));
 
-// router.post('/send', (req, res, next) => {
-//   let name = req.body.name;
-//   let email = req.body.email;
-//   let message = req.body.message;
-//   let content = `name: ${name} \n email: ${email} \n message: ${message}`
-
-//   let mail = {
-//     from: name,
-//     to: process.env.USER,
-//     subject: 'New message from contact form',
-//     text: content
+// transporter.verify((error, success) => {
+//   if(error) {
+//     console.log(error)
 //   }
-
-//   transporter.sendMail(mail, (err, data) => {
-//     if (err) {
-//       res.json({status: 'fail'})
-//     }
-//     else {
-//       res.json({status: 'success'})
-//     }
-//   })
+//   else {
+//     console.log('Server is ready to take messages')
+//   }
 // })
+
+// //FOR TESTING:
+// const transport = {
+//   host: credits.TEST_HOST,
+//   port: credits.TEST_PORT,
+//   auth: {
+//     user: credits.TEST_USER,
+//     pass: credits.TEST_PASSWORD
+//   },
+//   debug: true,
+//   logger: true
+// };
