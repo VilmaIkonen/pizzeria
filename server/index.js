@@ -1,67 +1,61 @@
-//with oAuth2, not working currently
+const express = require('express');
+const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
 const {google} = require('googleapis');
+const OAuth2 = google.auth.OAuth2;
 const credits = require('./config');
 
-const oAuth2Client = new google.auth.OAuth2(credits.CLIENT_ID, credits.CLIENT_SECRET, credits.REDIRECT_URI);
+const PORT = process.env.PORT || 3000;
+const app = express();
+app.use(bodyParser.json());
 
-oAuth2Client.setCredentials({refresh_token: credits.REFRESH_TOKEN});
+const myOAuth2Client = new OAuth2(
+  credits.CLIENT_ID,
+  credits.CLIENT_SECRET,
+  credits.REDIRECT_URI
+)
 
-async function sendMail() {
-  try {
-    const accessToken = await oAuth2Client.getAccessToken();
+myOAuth2Client.setCredentials({refresh_token: credits.REFRESH_TOKEN});
 
-    const transport = nodemailer.createTransport({
-      host: credits.HOST,
-      port: credits.PORT,
-      secure: true,
-      auth: {
-        type: 'OAuth2',
-        user: credits.USER,
-        clientId: credits.CLIENT_ID,
-        clientSecret: credits.CLIENT_SECRET,
-        refreshToken: credits.REFRESH_TOKEN,
-        accessToken: accessToken
-      }
-    })
+const myAccessToken = myOAuth2Client.getAccessToken();
 
-    const mailOptions = {
-      from: credits.USER,
-      to: credits.TEST_RECIPIENT,
-      subject: 'New message from contact form',
-      text: 'Hello from test email!',
-      html: '<h1>Hello from test email</h1>!'
-    }
-    
-    const result = await transport.sendMail(mailOptions);
-    return result;
-  } 
-  catch (err) {
-    return err
+const transport = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    type: 'OAuth2',
+    user: credits.GMAIL_USER,
+    clientId: credits.CLIENT_ID,
+    clientSecret: credits.CLIENT_SECRET,
+    refreshToken: credits.REFRESH_TOKEN,
+    accessToken: myAccessToken
   }
-}
+})
 
-sendMail()
-.then((result) => console.log('Email has been send', result))
-.catch((error) => console.log(error.message));
+// default endpoint:
+app.get('/', (req, res) => {
+  res.send({message: 'Default route in pizzeria contact form'})
+});
 
-// transporter.verify((error, success) => {
-//   if(error) {
-//     console.log(error)
-//   }
-//   else {
-//     console.log('Server is ready to take messages')
-//   }
-// })
+app.post('/sendemail', (req, res) => {
 
-// //FOR TESTING:
-// const transport = {
-//   host: credits.TEST_HOST,
-//   port: credits.TEST_PORT,
-//   auth: {
-//     user: credits.TEST_USER,
-//     pass: credits.TEST_PASSWORD
-//   },
-//   debug: true,
-//   logger: true
-// };
+  const mailOptions = {
+    from: credits.GMAIL_USER,
+    to: req.body.email,
+    subject: 'Hello from test nodemailer email',
+    text: 'TEST2, You received this email via nodemailer',
+    html: '<p>TEST2, You received this email via nodemailer<p>'
+  }
+  transport.sendMail(mailOptions, (err, result) => {
+    if(err) {
+      res.send({message: err})
+    }
+    else {
+      res.send({message: 'Email has been send, check your inbox'});
+      transport.close();
+    }
+  })
+})
+
+app.listen(PORT, (req, res) => {
+  console.log(`App listening on port ${PORT}`)
+});
