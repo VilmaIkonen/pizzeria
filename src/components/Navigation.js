@@ -15,6 +15,9 @@ const Navigation = (props) => {
           <li>
             <NavLink to='/cart'>Cart ({props.cartItemCount})</NavLink>
           </li>
+          <li>
+            <NavLink to='/contact'>Contact</NavLink>
+          </li>
         </ul>
       </nav>
     </header>    
