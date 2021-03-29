@@ -10,7 +10,7 @@ import Contact from './components/Contact/Contact'
 
 const App = () => {
   const cartItemCount = useSelector((state) =>
-    state.cart.reduce((count, curItem) => {
+    state.car.reduce((count, curItem) => {
       return count + curItem.quantity;
     }, 0)
   );
